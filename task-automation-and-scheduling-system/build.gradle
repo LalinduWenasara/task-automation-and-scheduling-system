@@ -58,8 +58,7 @@ jacocoTestReport {
 // 🔑 SonarCloud configuration
 sonar {
     properties {
-        property "sonar.projectKey", "lalinduwenasara"
+        property "sonar.projectKey", "LalinduWenasara_task-automation-and-scheduling-system"
         property "sonar.organization", "lalinduwenasara"
     }
-}
 }
