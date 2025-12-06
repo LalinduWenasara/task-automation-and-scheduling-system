@@ -8,12 +8,15 @@ import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.enums.
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.exception.UserExistsException;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.UserRepository;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.security.JwtService;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.service.AuthService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-public class AuthServiceImpl {
+@Service
+public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -31,6 +34,7 @@ public class AuthServiceImpl {
     }
 
     @Transactional
+    @Override
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -54,6 +58,7 @@ public class AuthServiceImpl {
         return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), "User registered successfully");
     }
 
+    @Override
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
