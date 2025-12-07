@@ -6,6 +6,14 @@ import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.Re
 import org.springframework.transaction.annotation.Transactional;
 
 public interface AuthService {
+
+    /**
+     * register.
+     *
+     * @param request register request
+     * @return {AuthResponse}
+     */
+
     @Transactional
     AuthResponse register(RegisterRequest request);
 
