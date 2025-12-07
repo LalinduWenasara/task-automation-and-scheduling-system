@@ -25,7 +25,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # Your Gradle project is in the subfolder: task-automation-and-scheduling-system
+      - name: Make gradlew executable
+        working-directory: task-automation-and-scheduling-system
+        run: chmod +x gradlew
+
       - name: Build Project (Gradle)
         working-directory: task-automation-and-scheduling-system
         run: ./gradlew build
