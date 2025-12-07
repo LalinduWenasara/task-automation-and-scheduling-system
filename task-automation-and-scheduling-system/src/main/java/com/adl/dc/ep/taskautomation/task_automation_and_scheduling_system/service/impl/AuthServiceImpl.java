@@ -58,6 +58,8 @@ public class AuthServiceImpl implements AuthService {
         return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), "User registered successfully");
     }
 
+
+
     @Override
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(

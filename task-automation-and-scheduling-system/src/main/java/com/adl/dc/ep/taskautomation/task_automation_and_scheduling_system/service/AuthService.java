@@ -9,5 +9,12 @@ public interface AuthService {
     @Transactional
     AuthResponse register(RegisterRequest request);
 
+    /**
+     * login.
+     *
+     * @param request login request
+     * @return {AuthResponse}
+     */
+
     AuthResponse login(LoginRequest request);
 }

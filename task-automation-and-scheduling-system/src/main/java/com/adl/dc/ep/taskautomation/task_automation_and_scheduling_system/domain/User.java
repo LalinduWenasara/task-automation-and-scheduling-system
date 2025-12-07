@@ -36,6 +36,7 @@ public class User implements UserDetails {
     private boolean enabled = true;
 
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 
     public User() {
