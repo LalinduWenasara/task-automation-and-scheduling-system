@@ -33,14 +33,8 @@ jobs:
         working-directory: task-automation-and-scheduling-system
         run: ./gradlew build
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2.0.2
+      - name: SonarCloud Scan (Gradle)
+        working-directory: task-automation-and-scheduling-system
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          projectBaseDir: task-automation-and-scheduling-system
-          args: >
-            -Dsonar.projectKey=LalinduWenasara_task-automation-and-scheduling-system
-            -Dsonar.organization=lalinduwenasara
-            -Dsonar.sources=src
-            -Dsonar.java.binaries=build/classes
+        run: ./gradlew sonarqube --info
