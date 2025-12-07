@@ -26,12 +26,11 @@ jobs:
           java-version: 17
 
       - name: Build Project (Gradle)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.10        
-          arguments: build         
+        working-directory: task-automation-and-scheduling-system
+        run: ./gradlew build
 
       - name: SonarCloud Scan
+        working-directory: task-automation-and-scheduling-system
         uses: SonarSource/sonarcloud-github-action@v2.0.2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
