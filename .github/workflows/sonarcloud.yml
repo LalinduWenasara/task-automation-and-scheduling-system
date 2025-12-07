@@ -25,16 +25,20 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Make gradlew executable
+        working-directory: task-automation-and-scheduling-system
+        run: chmod +x gradlew
+
       - name: Build Project (Gradle)
         working-directory: task-automation-and-scheduling-system
         run: ./gradlew build
 
       - name: SonarCloud Scan
-        working-directory: task-automation-and-scheduling-system
         uses: SonarSource/sonarcloud-github-action@v2.0.2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
+          projectBaseDir: task-automation-and-scheduling-system
           args: >
             -Dsonar.projectKey=LalinduWenasara_task-automation-and-scheduling-system
             -Dsonar.organization=lalinduwenasara
