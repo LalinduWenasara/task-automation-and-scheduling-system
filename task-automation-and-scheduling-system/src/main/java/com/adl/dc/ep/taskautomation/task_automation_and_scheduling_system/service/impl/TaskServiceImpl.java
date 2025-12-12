@@ -4,6 +4,7 @@ import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.Job.Ta
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskRequest;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskResponse;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.enums.TaskStatus;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.exception.ResourceNotFoundException;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.TaskRepository;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.service.TaskService;
 import org.quartz.*;
@@ -13,6 +14,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -172,6 +176,82 @@ private JobDetail buildJobDetail(Task task) {
         response.setLastExecutedAt(task.getLastExecutedAt());
         return response;
     }
+
+    private void rescheduleTask(Task task) throws SchedulerException {
+        unscheduleTask(task.getId());
+        scheduleTask(task);
+    }
+
+    private void unscheduleTask(Long taskId) throws SchedulerException {
+        JobKey jobKey = JobKey.jobKey(taskId.toString(), "user-tasks");
+        scheduler.deleteJob(jobKey);
+    }
+
+    private Task getTaskByIdAndUser(Long taskId) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+
+        if (!task.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Access denied");
+        }
+
+        return task;
+    }
+
+
+    @Transactional
+    @Override
+    public void deleteTask(Long taskId) {
+        Task task = getTaskByIdAndUser(taskId);
+
+        try {
+            unscheduleTask(taskId);
+        } catch (SchedulerException e) {
+            // log
+        }
+
+        taskRepository.delete(task);
+    }
+
+    @Transactional
+    @Override
+    public TaskResponse updateTask(Long taskId, TaskRequest request){
+
+    Task task = getTaskByIdAndUser(taskId);
+    task.setName(request.getName());
+    task.setDescription(request.getDescription());
+    task.setCronExpression(request.getCronExpression());
+        task.setTaskType(request.getTaskType());
+        task.setActionPayload(request.getActionPayload());
+
+        Task updatedTask = taskRepository.save(task);
+
+        try {
+            rescheduleTask(updatedTask);
+        } catch (SchedulerException e) {
+            throw new RuntimeException("Failed to reschedule task: " + e.getMessage(), e);
+        }
+
+        return mapToResponse(updatedTask);
+    }
+
+    @Override
+    public TaskResponse getTask(Long taskId) {
+        Task task = getTaskByIdAndUser(taskId);
+        return mapToResponse(task);
+    }
+
+    @Override
+    public List<TaskResponse> getAllUserTasks() {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return taskRepository.findByUserId(currentUser.getId())
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+
 }
 
 

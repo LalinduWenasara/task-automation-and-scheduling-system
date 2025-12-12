@@ -29,4 +29,29 @@ public class TaskController {
                 .body(new ApiResponse(true, "Task created successfully", task));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateTask(@PathVariable Long id,
+                                                  @Valid @RequestBody TaskRequest request) {
+        TaskResponse task = taskService.updateTask(id, request);
+        return ResponseEntity.ok(new ApiResponse(true, "Task updated successfully", task));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteTask(@PathVariable Long id) {
+        taskService.deleteTask(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Task deleted successfully", null));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse> getAllTasks() {
+        List<TaskResponse> tasks = taskService.getAllUserTasks();
+        return ResponseEntity.ok(new ApiResponse(true, "Tasks retrieved successfully", tasks));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse> getTask(@PathVariable Long id) {
+        TaskResponse task = taskService.getTask(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Task retrieved successfully", task));
+    }
+
 }
