@@ -7,4 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 public interface TaskService {
     @Transactional
     TaskResponse createTask(TaskRequest request);
+
+    @Transactional
+    void deleteTask(Long taskId);
+
+    @Transactional
+    TaskResponse updateTask(Long taskId, TaskRequest request);
 }
