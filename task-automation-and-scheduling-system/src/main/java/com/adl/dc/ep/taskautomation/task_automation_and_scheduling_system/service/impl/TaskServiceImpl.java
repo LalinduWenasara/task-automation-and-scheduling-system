@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class TaskServiceImpl implements TaskService {
 
@@ -232,6 +235,23 @@ private JobDetail buildJobDetail(Task task) {
 
         return mapToResponse(updatedTask);
     }
+
+    @Override
+    public TaskResponse getTask(Long taskId) {
+        Task task = getTaskByIdAndUser(taskId);
+        return mapToResponse(task);
+    }
+
+    @Override
+    public List<TaskResponse> getAllUserTasks() {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return taskRepository.findByUserId(currentUser.getId())
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+
 }
 
 

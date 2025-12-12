@@ -4,6 +4,8 @@ import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.Ta
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskResponse;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 public interface TaskService {
     @Transactional
     TaskResponse createTask(TaskRequest request);
@@ -13,4 +15,8 @@ public interface TaskService {
 
     @Transactional
     TaskResponse updateTask(Long taskId, TaskRequest request);
+
+    TaskResponse getTask(Long taskId);
+
+    List<TaskResponse> getAllUserTasks();
 }

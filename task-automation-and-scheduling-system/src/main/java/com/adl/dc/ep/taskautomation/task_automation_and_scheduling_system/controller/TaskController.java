@@ -42,4 +42,16 @@ public class TaskController {
         return ResponseEntity.ok(new ApiResponse(true, "Task deleted successfully", null));
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse> getAllTasks() {
+        List<TaskResponse> tasks = taskService.getAllUserTasks();
+        return ResponseEntity.ok(new ApiResponse(true, "Tasks retrieved successfully", tasks));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse> getTask(@PathVariable Long id) {
+        TaskResponse task = taskService.getTask(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Task retrieved successfully", task));
+    }
+
 }
