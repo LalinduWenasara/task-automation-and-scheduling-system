@@ -7,8 +7,11 @@ import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.reposi
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.TaskRepository;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.service.EmailService;
 import org.quartz.Job;
+import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -17,6 +20,8 @@ import java.time.LocalDateTime;
 
 @Component
 public class TaskExecutionJob implements Job {
+
+    private static final Logger logger = LoggerFactory.getLogger(TaskExecutionJob.class);
 
     @Autowired
     private TaskRepository taskRepository;
@@ -29,7 +34,26 @@ public class TaskExecutionJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        Long taskId = context.getJobDetail().getJobDataMap().getLong("taskId");
+        logger.info("TaskExecutionJob.execute started");
+
+        JobDataMap dataMap = context.getMergedJobDataMap();
+        // JobDataMap values are stored as Strings (because useProperties = true)
+        String taskIdStr = dataMap.getString("taskId");
+
+        if (taskIdStr == null) {
+            logger.error("taskId is missing from JobDataMap");
+            throw new JobExecutionException("taskId is missing from JobDataMap");
+        }
+
+        Long taskId;
+        try {
+            taskId = Long.valueOf(taskIdStr);
+        } catch (NumberFormatException e) {
+            logger.error("Invalid taskId '{}' in JobDataMap", taskIdStr, e);
+            throw new JobExecutionException("Invalid taskId in JobDataMap: " + taskIdStr, e);
+        }
+
+        logger.info("Executing task with id={}", taskId);
 
         TaskExecution execution = new TaskExecution();
         execution.setTaskId(taskId);
@@ -39,7 +63,10 @@ public class TaskExecutionJob implements Job {
 
         try {
             Task task = taskRepository.findById(taskId)
-                    .orElseThrow(() -> new RuntimeException("Task not found"));
+                    .orElseThrow(() -> {
+                        logger.error("Task not found for id={}", taskId);
+                        return new RuntimeException("Task not found for id=" + taskId);
+                    });
 
             String result = executeTaskLogic(task);
 
@@ -50,7 +77,9 @@ public class TaskExecutionJob implements Job {
             task.setLastExecutedAt(LocalDateTime.now());
             taskRepository.save(task);
 
+            logger.info("Task id={} executed successfully. Result={}", taskId, result);
         } catch (Exception e) {
+            logger.error("Error executing task id={}: {}", taskId, e.getMessage(), e);
             execution.setEndTime(LocalDateTime.now());
             execution.setStatus(ExecutionStatus.FAILED);
             execution.setErrorMessage(e.getMessage());
@@ -73,7 +102,8 @@ public class TaskExecutionJob implements Job {
     }
 
     private String executeEmailTask(Task task) {
-      //  emailService.sendTaskNotification(task);
+        emailService.sendTaskNotification(task);
+        logger.info("hurrayyyyyyyyyyyyyyyyyyyyy222222222");
         return "Email sent successfully";
     }
 
