@@ -34,7 +34,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Transactional
     @Override
-    public TaskResponse createTask(TaskRequest request){
+    public TaskResponse createTask(TaskRequest request) {
         User currentLoggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Task task = new Task();
@@ -55,7 +55,6 @@ public class TaskServiceImpl implements TaskService {
         }
 
         return mapToResponse(savedTask);
-     //   return null;
     }
 
     private void scheduleTask(Task task) throws SchedulerException {
@@ -70,12 +69,13 @@ public class TaskServiceImpl implements TaskService {
 //        JobDataMap dataMap = new JobDataMap();
 // //       dataMap.put("taskId", task.getId());
 //
-////        return JobBuilder.newJob(TaskExecutionJob.class)
-////                .withIdentity(task.getId().toString(), "user-tasks")
-////                .withDescription(task.getDescription())
-////                .setJobData(dataMap)
-////                .storeDurably()
-////                .build();
+
+    /// /        return JobBuilder.newJob(TaskExecutionJob.class)
+    /// /                .withIdentity(task.getId().toString(), "user-tasks")
+    /// /                .withDescription(task.getDescription())
+    /// /                .setJobData(dataMap)
+    /// /                .storeDurably()
+    /// /                .build();
 //
 //        dataMap.put("taskId", String.valueOf(task.getId()));
 //        dataMap.put("taskType", task.getTaskType().name());
@@ -129,21 +129,20 @@ public class TaskServiceImpl implements TaskService {
 //                .build();
 //    }
 //
+    private JobDetail buildJobDetail(Task task) {
+        JobDataMap dataMap = new JobDataMap();
+        dataMap.put("taskId", String.valueOf(task.getId()));
+        dataMap.put("taskType", task.getTaskType().name());
+        dataMap.put("actionPayload", task.getActionPayload() != null ? task.getActionPayload() : "");
+        dataMap.put("userId", String.valueOf(task.getUserId()));
 
-private JobDetail buildJobDetail(Task task) {
-    JobDataMap dataMap = new JobDataMap();
-    dataMap.put("taskId", String.valueOf(task.getId()));
-    dataMap.put("taskType", task.getTaskType().name());
-    dataMap.put("actionPayload", task.getActionPayload() != null ? task.getActionPayload() : "");
-    dataMap.put("userId", String.valueOf(task.getUserId()));
-
-    return JobBuilder.newJob(TaskExecutionJob.class)
-            .withIdentity(task.getId().toString(), "user-tasks")
-            .withDescription(task.getDescription())
-            .usingJobData(dataMap)
-            .storeDurably()
-            .build();
-}
+        return JobBuilder.newJob(TaskExecutionJob.class)
+                .withIdentity(task.getId().toString(), "user-tasks")
+                .withDescription(task.getDescription())
+                .usingJobData(dataMap)
+                .storeDurably()
+                .build();
+    }
 
 
     private Trigger buildJobTrigger(JobDetail jobDetail, Task task) {
@@ -216,12 +215,12 @@ private JobDetail buildJobDetail(Task task) {
 
     @Transactional
     @Override
-    public TaskResponse updateTask(Long taskId, TaskRequest request){
+    public TaskResponse updateTask(Long taskId, TaskRequest request) {
 
-    Task task = getTaskByIdAndUser(taskId);
-    task.setName(request.getName());
-    task.setDescription(request.getDescription());
-    task.setCronExpression(request.getCronExpression());
+        Task task = getTaskByIdAndUser(taskId);
+        task.setName(request.getName());
+        task.setDescription(request.getDescription());
+        task.setCronExpression(request.getCronExpression());
         task.setTaskType(request.getTaskType());
         task.setActionPayload(request.getActionPayload());
 

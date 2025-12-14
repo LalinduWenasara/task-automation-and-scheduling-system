@@ -16,16 +16,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
-
     private static final Logger logger = LoggerFactory.getLogger(TaskServiceImpl.class);
+    private final JavaMailSender mailSender;
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
-    @Value("${spring.mail.username}")
-    private String fromEmail;
-
 
     @Override
     public void sendTaskNotification2(Task task) {
