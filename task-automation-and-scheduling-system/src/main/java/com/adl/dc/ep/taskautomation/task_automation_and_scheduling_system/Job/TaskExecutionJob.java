@@ -23,14 +23,19 @@ public class TaskExecutionJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionJob.class);
 
-    @Autowired
-    private TaskRepository taskRepository;
 
-    @Autowired
-    private TaskExecutionRepository executionRepository;
+    private final TaskRepository taskRepository;
 
-    @Autowired
-    private EmailService emailService;
+    private final TaskExecutionRepository executionRepository;
+
+    private final EmailService emailService;
+
+    public TaskExecutionJob(TaskRepository taskRepository, TaskExecutionRepository executionRepository,
+                            EmailService emailService) {
+        this.taskRepository = taskRepository;
+        this.executionRepository = executionRepository;
+        this.emailService = emailService;
+    }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -103,7 +108,7 @@ public class TaskExecutionJob implements Job {
 
     private String executeEmailTask(Task task) {
         emailService.sendTaskNotification(task);
-        logger.info("hurrayyyyyyyyyyyyyyyyyyyyy222222222");
+        logger.info("Email sent successfully");
         return "Email sent successfully";
     }
 

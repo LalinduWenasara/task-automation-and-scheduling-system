@@ -5,5 +5,6 @@ public enum TaskType {
     HTTP_REQUEST,
     DATABASE_BACKUP,
     DATA_SYNC,
+    WEATHER,
     CUSTOM
 }
