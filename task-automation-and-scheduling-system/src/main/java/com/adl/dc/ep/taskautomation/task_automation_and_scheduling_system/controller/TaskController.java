@@ -5,6 +5,7 @@ import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.Ap
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskRequest;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskResponse;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.service.TaskService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,10 @@ public class TaskController {
         this.taskService = taskService;
     }
 
+    @Operation(
+            summary = "Create a new task",
+            description = "Creates a scheduled task and registers it in the system."
+    )
     @PostMapping
     public ResponseEntity<ApiResponse> createTask(@Valid @RequestBody TaskRequest request) {
         TaskResponse task = taskService.createTask(request);

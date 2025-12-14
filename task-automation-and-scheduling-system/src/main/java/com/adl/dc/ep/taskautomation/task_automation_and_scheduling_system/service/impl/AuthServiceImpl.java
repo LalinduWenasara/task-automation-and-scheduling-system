@@ -24,9 +24,9 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthServiceImpl(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtService jwtService,
-                       AuthenticationManager authenticationManager) {
+                           PasswordEncoder passwordEncoder,
+                           JwtService jwtService,
+                           AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -57,7 +57,6 @@ public class AuthServiceImpl implements AuthService {
 
         return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), "User registered successfully");
     }
-
 
 
     @Override
