@@ -42,7 +42,7 @@ class AuthServiceImplTest {
 
     @Test
     void register_shouldCreateUserAndReturnAuthResponse() {
-        // ---------- Arrange ----------
+
         RegisterRequest request = new RegisterRequest();
         request.setUsername("testuser");
         request.setEmail("test@example.com");
@@ -56,10 +56,10 @@ class AuthServiceImplTest {
 
         when(jwtService.generateToken(any(User.class))).thenReturn("jwt-token");
 
-        // ---------- Act ----------
+
         AuthResponse response = authService.register(request);
 
-        // ---------- Assert ----------
+        // Assert
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
         assertEquals("testuser", response.getUsername());
@@ -80,7 +80,7 @@ class AuthServiceImplTest {
 
     @Test
     void register_whenUsernameExists_shouldThrowUserExistsException() {
-        // ---------- Arrange ----------
+
         RegisterRequest request = new RegisterRequest();
         request.setUsername("existingUser");
         request.setEmail("newemail@example.com");
@@ -88,7 +88,6 @@ class AuthServiceImplTest {
 
         when(userRepository.existsByUsername("existingUser")).thenReturn(true);
 
-        // ---------- Act + Assert ----------
         UserExistsException ex = assertThrows(
                 UserExistsException.class,
                 () -> authService.register(request)
@@ -142,10 +141,8 @@ class AuthServiceImplTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(jwtService.generateToken(user)).thenReturn("jwt-login-token");
 
-        // ---------- Act ----------
         AuthResponse response = authService.login(request);
 
-        // ---------- Assert ----------
         assertNotNull(response);
         assertEquals("jwt-login-token", response.getToken());
         assertEquals("testuser", response.getUsername());
