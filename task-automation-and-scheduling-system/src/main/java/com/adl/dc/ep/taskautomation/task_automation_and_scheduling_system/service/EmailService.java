@@ -8,7 +8,7 @@ public interface EmailService {
 
     void sendTaskNotification(Task task);
 
-//    String sendEmail(NotificationEmailRequest emailRequest);
-//
-//    String sendEmail(Task emailRequest);
+    void sendSimpleEmail(String to, String subject, String body);
+
+
 }
