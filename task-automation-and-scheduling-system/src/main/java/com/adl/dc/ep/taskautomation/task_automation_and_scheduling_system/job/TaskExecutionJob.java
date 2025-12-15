@@ -1,10 +1,14 @@
-package com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.Job;
+package com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.job;
 
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.Task;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.TaskExecution;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.User;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.OpenWeatherResponseDto;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.enums.ExecutionStatus;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.exception.ExternalServiceException;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.exception.InvalidTaskPayloadException;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.exception.TaskNotFoundException;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.exception.UserNotFoundException;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.TaskExecutionRepository;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.TaskRepository;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.UserRepository;
@@ -89,7 +93,7 @@ public class TaskExecutionJob implements Job {
             Task task = taskRepository.findById(taskId)
                     .orElseThrow(() -> {
                         logger.error("Task not found for id={}", taskId);
-                        return new RuntimeException("Task not found for id=" + taskId);
+                        return new TaskNotFoundException(taskId);
                     });
 
             String result = executeTaskLogic(task);
@@ -100,7 +104,6 @@ public class TaskExecutionJob implements Job {
 
             task.setLastExecutedAt(LocalDateTime.now());
             taskRepository.save(task);
-
             logger.info("Task id={} executed successfully. Result={}", taskId, result);
         } catch (Exception e) {
             logger.error("Error executing task id={}: {}", taskId, e.getMessage(), e);
@@ -140,7 +143,7 @@ public class TaskExecutionJob implements Job {
             String response = restTemplate.getForObject(url, String.class);
             return "HTTP request completed: " + response;
         } catch (Exception e) {
-            throw new RuntimeException("HTTP request failed: " + e.getMessage());
+            throw new ExternalServiceException("HTTP request failed: " + e.getMessage());
         }
     }
 
@@ -149,15 +152,13 @@ public class TaskExecutionJob implements Job {
     }
 
 
-
     private String executeWeatherTask(Task task) {
 
-        // Read the location (city or city,countryCode) from the task payload
+        // Read the location
         String location = task.getActionPayload();
 
-        // Validate that a location is provided for WEATHER tasks
         if (location == null || location.isBlank()) {
-            throw new IllegalArgumentException("Location is required for WEATHER tasks");
+            throw new InvalidTaskPayloadException("Location is required for WEATHER tasks");
         }
 
         // Build the OpenWeather API URL with required query parameters
@@ -168,18 +169,18 @@ public class TaskExecutionJob implements Job {
                 .build()
                 .toUriString();
 
-        // Call the OpenWeather API and map the response to a DTO
+        // Call the OpenWeather API
         OpenWeatherResponseDto weather =
                 new RestTemplate().getForObject(url, OpenWeatherResponseDto.class);
 
         // Validate the API response
         if (weather == null || weather.getMain() == null) {
-            throw new RuntimeException("Invalid response from OpenWeather API");
+            throw new ExternalServiceException("Invalid response from OpenWeather API");
         }
 
         // Fetch the user who owns this task
         User user = userRepository.findById(task.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(task.getUserId()));
 
         // Extract temperature value from the weather response
         double temp = weather.getMain().getTemp();

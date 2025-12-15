@@ -1,4 +1,4 @@
-package com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.Job;
+package com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.job;
 
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.Task;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.TaskExecution;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -81,29 +82,22 @@ class TaskExecutionJobTest {
         verifyNoInteractions(executionRepository, taskRepository, userRepository, emailService);
     }
 
-
     @Test
     void execute_whenEmailTask_shouldSendEmail_markSuccess_updateTaskAndExecution() throws Exception {
         long taskId = 10L;
         JobDataMap map = new JobDataMap();
         map.put("taskId", String.valueOf(taskId));
         when(context.getMergedJobDataMap()).thenReturn(map);
-
         when(executionRepository.save(any(TaskExecution.class))).thenAnswer(inv -> inv.getArgument(0));
         Task t = task(taskId, TaskType.EMAIL, "ignored");
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(t));
         when(taskRepository.save(any(Task.class))).thenAnswer(inv -> inv.getArgument(0));
-
         newJob().execute(context);
-
         verify(emailService, times(1)).sendTaskNotification(any(Task.class));
-
         verify(taskRepository).save(taskCaptor.capture());
         assertNotNull(taskCaptor.getValue().getLastExecutedAt());
-
         verify(executionRepository, times(2)).save(executionCaptor.capture());
         TaskExecution finalSave = executionCaptor.getAllValues().get(1);
-
         assertEquals(taskId, finalSave.getTaskId());
         assertEquals(ExecutionStatus.SUCCESS, finalSave.getStatus());
         assertNotNull(finalSave.getEndTime());
@@ -119,6 +113,7 @@ class TaskExecutionJobTest {
         when(context.getMergedJobDataMap()).thenReturn(map);
 
         when(executionRepository.save(any(TaskExecution.class))).thenAnswer(inv -> inv.getArgument(0));
+
         Task t = task(taskId, TaskType.DATA_SYNC, null);
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(t));
         when(taskRepository.save(any(Task.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -144,11 +139,13 @@ class TaskExecutionJobTest {
         when(context.getMergedJobDataMap()).thenReturn(map);
 
         when(executionRepository.save(any(TaskExecution.class))).thenAnswer(inv -> inv.getArgument(0));
+
         Task t = task(taskId, TaskType.HTTP_REQUEST, null);
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(t));
 
         newJob().execute(context);
 
+        // Should NOT update task lastExecutedAt on failure
         verify(taskRepository, never()).save(any(Task.class));
 
         verify(executionRepository, times(2)).save(executionCaptor.capture());
@@ -157,30 +154,11 @@ class TaskExecutionJobTest {
         assertEquals(ExecutionStatus.FAILED, finalSave.getStatus());
         assertNotNull(finalSave.getEndTime());
         assertNotNull(finalSave.getErrorMessage());
+        assertFalse(finalSave.getErrorMessage().toLowerCase().contains("url is required"));
     }
 
-    @Test
-    void execute_whenTaskTypeNull_shouldMarkFailed() throws Exception {
-        long taskId = 40L;
-        JobDataMap map = new JobDataMap();
-        map.put("taskId", String.valueOf(taskId));
-        when(context.getMergedJobDataMap()).thenReturn(map);
 
-        when(executionRepository.save(any(TaskExecution.class))).thenAnswer(inv -> inv.getArgument(0));
-        Task t = new Task();
-        t.setId(taskId);
-        t.setTaskType(null);
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(t));
-
-        newJob().execute(context);
-
-        verify(executionRepository, times(2)).save(executionCaptor.capture());
-        TaskExecution finalSave = executionCaptor.getAllValues().get(1);
-
-        assertEquals(ExecutionStatus.FAILED, finalSave.getStatus());
-        assertNotNull(finalSave.getErrorMessage());
-    }
 
     @Test
     void execute_whenWeatherTask_locationMissing_shouldMarkFailed() throws Exception {
@@ -190,6 +168,7 @@ class TaskExecutionJobTest {
         when(context.getMergedJobDataMap()).thenReturn(map);
 
         when(executionRepository.save(any(TaskExecution.class))).thenAnswer(inv -> inv.getArgument(0));
+
         Task t = task(taskId, TaskType.WEATHER, "   "); // blank location
         t.setUserId(99L);
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(t));

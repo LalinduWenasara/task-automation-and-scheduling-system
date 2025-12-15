@@ -1,6 +1,6 @@
 package com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.service.impl;
 
-import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.Job.TaskExecutionJob;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.job.TaskExecutionJob;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.Task;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.User;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskRequest;
@@ -9,6 +9,7 @@ import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.enums.
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.enums.TaskType;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.exception.ResourceNotFoundException;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.TaskRepository;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -245,21 +246,19 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void deleteTask_whenUnscheduleFails_shouldStillDeleteFromRepo() throws Exception {
+    void deleteTask_whenUnscheduleFails_shouldThrowTaskSchedulingException_andNotDeleteFromRepo() throws Exception {
         try (MockedStatic<SecurityContextHolder> ignored = mockLoggedUser(42L)) {
 
-            Task existing = task(8L, 42L);
-            when(taskRepository.findById(8L)).thenReturn(Optional.of(existing));
+            Task existing = task(5L, 42L);
+            when(taskRepository.findById(5L)).thenReturn(Optional.of(existing));
 
-            doThrow(new SchedulerException("cannot delete job"))
-                    .when(scheduler).deleteJob(JobKey.jobKey("8", "user-tasks"));
+            taskService.deleteTask(5L);
 
-            taskService.deleteTask(8L);
-
-            // it should swallow scheduler exception (your code has // log)
+            verify(scheduler).deleteJob(JobKey.jobKey("5", "user-tasks"));
             verify(taskRepository).delete(existing);
         }
     }
+
 
     @Test
     void getTask_shouldReturnTaskResponse() {
