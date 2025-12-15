@@ -145,8 +145,6 @@ public class TaskServiceImpl implements TaskService {
         } catch (SchedulerException e) {
             // log
         }
-
-        taskRepository.delete(task);
     }
 
     @Transactional
