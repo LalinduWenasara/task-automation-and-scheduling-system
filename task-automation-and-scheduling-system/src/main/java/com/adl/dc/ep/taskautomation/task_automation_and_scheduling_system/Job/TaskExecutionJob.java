@@ -2,9 +2,12 @@ package com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.Job;
 
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.Task;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.TaskExecution;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.domain.User;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.OpenWeatherResponseDto;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.enums.ExecutionStatus;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.TaskExecutionRepository;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.TaskRepository;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.repository.UserRepository;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.service.EmailService;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -12,8 +15,11 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
 
 import java.time.LocalDateTime;
 
@@ -27,12 +33,26 @@ public class TaskExecutionJob implements Job {
 
     private final TaskExecutionRepository executionRepository;
 
+    private final UserRepository userRepository;
+
     private final EmailService emailService;
 
+
+    @Value("${weather.api-key}")
+    private String weatherApiKey;
+
+    @Value("${weather.base-url}")
+    private String weatherBaseUrl;
+
+    @Value("${weather.units:metric}")
+    private String weatherUnits;
+
     public TaskExecutionJob(TaskRepository taskRepository, TaskExecutionRepository executionRepository,
+                            UserRepository userRepository,
                             EmailService emailService) {
         this.taskRepository = taskRepository;
         this.executionRepository = executionRepository;
+        this.userRepository = userRepository;
         this.emailService = emailService;
     }
 
@@ -100,6 +120,8 @@ public class TaskExecutionJob implements Job {
                 return executeHttpTask(task);
             case DATA_SYNC:
                 return executeDataSyncTask(task);
+            case WEATHER:
+                return executeWeatherTask(task);
             default:
                 return "Task executed successfully";
         }
@@ -123,6 +145,59 @@ public class TaskExecutionJob implements Job {
     }
 
     private String executeDataSyncTask(Task task) {
-        return "Data synced successfully";
+        return task.getId().toString()+"Data synced successfully";
     }
+
+
+
+    private String executeWeatherTask(Task task) {
+
+        // Read the location (city or city,countryCode) from the task payload
+        String location = task.getActionPayload();
+
+        // Validate that a location is provided for WEATHER tasks
+        if (location == null || location.isBlank()) {
+            throw new IllegalArgumentException("Location is required for WEATHER tasks");
+        }
+
+        // Build the OpenWeather API URL with required query parameters
+        String url = UriComponentsBuilder.fromUriString(weatherBaseUrl)
+                .queryParam("q", location)        // location provided by user
+                .queryParam("appid", weatherApiKey) // OpenWeather API key
+                .queryParam("units", weatherUnits)  // temperature unit (metric/imperial)
+                .build()
+                .toUriString();
+
+        // Call the OpenWeather API and map the response to a DTO
+        OpenWeatherResponseDto weather =
+                new RestTemplate().getForObject(url, OpenWeatherResponseDto.class);
+
+        // Validate the API response
+        if (weather == null || weather.getMain() == null) {
+            throw new RuntimeException("Invalid response from OpenWeather API");
+        }
+
+        // Fetch the user who owns this task
+        User user = userRepository.findById(task.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Extract temperature value from the weather response
+        double temp = weather.getMain().getTemp();
+
+        // Extract weather description if available (fallback to 'N/A')
+        String desc = weather.getWeather() != null && !weather.getWeather().isEmpty()
+                ? weather.getWeather().get(0).getDescription()
+                : "N/A";
+
+        // Send weather information to the user via email
+        emailService.sendSimpleEmail(
+                user.getEmail(),
+                "Weather Update for " + location,
+                "Temperature: %.1f °C\nCondition: %s".formatted(temp, desc)
+        );
+
+        // Return execution result
+        return "Weather email sent to " + user.getEmail();
+    }
+
 }

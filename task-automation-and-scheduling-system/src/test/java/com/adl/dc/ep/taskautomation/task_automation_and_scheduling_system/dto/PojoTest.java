@@ -17,7 +17,7 @@ import java.util.List;
 
 class PojoTest {
 
-    private static final int EXPECTED_CLASS_COUNT = 7;
+    private static final int EXPECTED_CLASS_COUNT = 10;
     private static final String POJO_PACKAGE = "com/adl/dc/ep/taskautomation/task_automation_and_scheduling_system/dto";
 
     @Test
