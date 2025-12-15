@@ -22,6 +22,7 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
+
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
@@ -74,6 +75,11 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
+        System.out.println("****************************************key*******************");
+        System.out.println(secretKey);
+        if (secretKey.startsWith("JWT_SECRET:")) {
+            secretKey = secretKey.substring("JWT_SECRET:".length()).trim();
+        }
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
