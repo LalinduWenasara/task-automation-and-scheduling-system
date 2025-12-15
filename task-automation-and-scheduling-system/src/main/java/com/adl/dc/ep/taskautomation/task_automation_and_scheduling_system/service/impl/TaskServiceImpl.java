@@ -1,6 +1,6 @@
 package com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.service.impl;
 
-import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.Job.TaskExecutionJob;
+import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.job.TaskExecutionJob;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskRequest;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.dto.TaskResponse;
 import com.adl.dc.ep.taskautomation.task_automation_and_scheduling_system.enums.TaskStatus;
@@ -130,7 +130,6 @@ public class TaskServiceImpl implements TaskService {
         if (!task.getUserId().equals(currentUser.getId())) {
             throw new RuntimeException("Access denied");
         }
-
         return task;
     }
 
@@ -138,16 +137,17 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     @Override
     public void deleteTask(Long taskId) {
-        Task task = getTaskByIdAndUser(taskId);
+        Task existing = getTaskByIdAndUser(taskId);
 
         try {
             unscheduleTask(taskId);
         } catch (SchedulerException e) {
-            // log
+            logger.warn("Failed to unschedule Quartz job for taskId={}", taskId, e);
         }
 
-        taskRepository.delete(task);
+        taskRepository.delete(existing);
     }
+
 
     @Transactional
     @Override
