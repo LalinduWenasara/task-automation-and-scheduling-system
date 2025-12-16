@@ -75,8 +75,7 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        System.out.println("****************************************key*******************");
-        System.out.println(secretKey);
+     
         if (secretKey.startsWith("JWT_SECRET:")) {
             secretKey = secretKey.substring("JWT_SECRET:".length()).trim();
         }
