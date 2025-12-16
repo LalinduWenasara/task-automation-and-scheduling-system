@@ -35,7 +35,11 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     @Override
     public TaskResponse createTask(TaskRequest request) {
+
+        long startTime = System.nanoTime();
         User currentLoggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+
 
         Task task = new Task();
         task.setName(request.getName());
@@ -46,14 +50,25 @@ public class TaskServiceImpl implements TaskService {
         task.setUserId(currentLoggedUser.getId());
         task.setStatus(TaskStatus.ACTIVE);
 
+        long dbStart = System.nanoTime();
         Task savedTask = taskRepository.save(task);
-
+        long dbEnd = System.nanoTime();
+        long schedulerStart = System.nanoTime();
         try {
+
             scheduleTask(savedTask);
+
         } catch (SchedulerException e) {
             throw new RuntimeException("Failed to schedule task: " + e.getMessage(), e);
         }
-
+        long schedulerEnd = System.nanoTime();
+        long endTime = System.nanoTime();
+        logger.info(
+                "Task created successfully | taskId={} | totalTimeMs={} | schedulerTimeMs={}",
+                savedTask.getId(),
+                (endTime - startTime) / 1_000_000,
+                (schedulerEnd - schedulerStart) / 1_000_000
+        );
         return mapToResponse(savedTask);
     }
 
